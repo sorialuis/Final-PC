@@ -1,0 +1,7 @@
+*.pdf
+a.out
+cmake-build-debug/
+.idea
+.floo
+.flooignore
+CMakeLists.txt
