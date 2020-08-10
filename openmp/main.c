@@ -5,8 +5,8 @@
 #include <time.h>
 
 int verifyNumber(int number);
-int printPrimeNumbers(int count, int* numbers,int checked);
-void saveResult(int* result, int count);
+int printPrimeNumbers(int* numbers,int count,int checked,double elapsedTime);
+void saveResult(int* result, int count,int checked,double elapsedTime);
 int main() {
 
     clock_t start, stop;
@@ -87,7 +87,6 @@ int main() {
                     verify_number = true; /* Unlock Verifier Thread */
 
                     if(prime_numbers_count == request){
-                        printPrimeNumbers(prime_numbers_count,prime_numbers,numbers_tested);
                         generate_number = true;
                         break;
                     } /* Unlock all threads */
@@ -98,7 +97,10 @@ int main() {
 
     stop = clock();
 
-    printf("Tiempo de ejecucion: %fs\n",(stop-start)/(double)CLOCKS_PER_SEC);
+
+    double elapsedTime = (stop-start)/(double)CLOCKS_PER_SEC;
+    printPrimeNumbers(prime_numbers,prime_numbers_count,numbers_tested,elapsedTime);
+    saveResult(prime_numbers,prime_numbers_count,numbers_tested,elapsedTime);
 
     return 0;
 }
@@ -123,19 +125,23 @@ int verifyNumber(int number){
     return 0;
 }
 
-int printPrimeNumbers(int count, int* nubmers,int checked){
+int printPrimeNumbers(int* nubmers,int count,int checked,double elapsedTime){
     int i;
     for(i = 0; i < count; i++)
         printf("El numero %d es primo\n",nubmers[i]);
 
     printf("Numero Analizados %d\n",checked);
+    printf("Tiempo de ejecucion: %fs\n",elapsedTime);
+
 }
 
-void saveResult(int* result, int count){
+void saveResult(int* result, int count,int checked,double elapsedTime){
     FILE* file;
     file = fopen("result.txt", "wt");
     for (int i = 0; i < count; i++) {
         fprintf(file,"%d\n", result[i]);
     }
+    fprintf(file,"Numeros Analizados: %d\n",checked);
+    fprintf(file,"Tiempo Transcurrido: %fs\n",elapsedTime);
     fclose(file);
 }
