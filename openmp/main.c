@@ -26,7 +26,6 @@ int main() {
     scanf("%d",&request);
     int* prime_numbers = calloc(request,sizeof(int));
 
-
     start = clock();
 
     #pragma omp parallel default(shared)
@@ -106,7 +105,7 @@ int main() {
 
 int verifyNumber(int number){
     int dividers = 0;
-    #pragma omp parallel default(shared)
+    #pragma omp parallel default(shared) reduction(+:dividers)
     {
         #pragma omp for
             for(int i = 1; i <= number; i++){
