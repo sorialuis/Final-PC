@@ -105,10 +105,11 @@ int main() {
 
 int verifyNumber(int number){
     int dividers = 0;
-    #pragma omp parallel default(shared) reduction(+:dividers)
+    int i = 1;
+    #pragma omp parallel default(shared) private(i) reduction(+:dividers)
     {
         #pragma omp for
-            for(int i = 1; i <= number; i++){
+            for(i = 1; i <= number; i++){
                 if(number%i == 0){
                     dividers++;
                 }
@@ -123,7 +124,8 @@ int verifyNumber(int number){
 }
 
 int printPrimeNumbers(int count, int* nubmers,int checked){
-    for(int i = 0; i < count; i++)
+    int i;
+    for(i = 0; i < count; i++)
         printf("El numero %d es primo\n",nubmers[i]);
 
     printf("Numero Analizados %d\n",checked);
