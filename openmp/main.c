@@ -6,7 +6,7 @@
 
 int verifyNumber(int number);
 int printPrimeNumbers(int count, int* numbers,int checked);
-
+void saveResult(int* result, int count);
 int main() {
 
     clock_t start, stop;
@@ -129,4 +129,13 @@ int printPrimeNumbers(int count, int* nubmers,int checked){
         printf("El numero %d es primo\n",nubmers[i]);
 
     printf("Numero Analizados %d\n",checked);
+}
+
+void saveResult(int* result, int count){
+    FILE* file;
+    file = fopen("result.txt", "wt");
+    for (int i = 0; i < count; i++) {
+        fprintf(file,"%d\n", result[i]);
+    }
+    fclose(file);
 }

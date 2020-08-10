@@ -1,4 +1,5 @@
 *.pdf
+*.txt
 a.out
 cmake-build-debug/
 .idea
