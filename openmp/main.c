@@ -1,99 +1,112 @@
 #include <stdio.h>
 #include <omp.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
 
 int verifyNumber(int number);
-int* collectResults();
+int printPrimeNumbers(int count, int* numbers,int checked);
 
 int main() {
-    int request_count = 100;
-    int numbers_found = 0;
-    int numbers_checked = 0;
-    int res = 0;
+
+    clock_t start, stop;
+
+    /* Lock Flags */
+    bool generate_number = false;
+    bool verify_number = true;
+    bool collect_number = false;
+
+    /* Shared Variables  */
+    int generated_number = -1;
+    int numbers_tested = 0;
+    int request = 0;
+    int prime_numbers_count = 0;
 
     printf("Ingrese la cantidad de numeros primos que quiere buscar: ");
-    scanf("%d",&request_count);
-    int* found = calloc(request_count,sizeof(int));
+    scanf("%d",&request);
+    int* prime_numbers = calloc(request,sizeof(int));
 
-    int waiting_request = 1;
 
-    int generated_number = -1;
-    int number_generated = 0;
+    start = clock();
 
-    int collect_numbers = 0;
-    int number_collected = 0;
-
-    #pragma omp parallel default(shared) private(res)
+    #pragma omp parallel default(shared)
     {
-        #pragma omp sections nowait
+        #pragma omp sections
         {
-            /* Generador */
+            /* Number Generator */
             #pragma omp section
             {
-                while(numbers_found < request_count){
+                while(prime_numbers_count < request){ /* Program not finished */
 
-                    while(waiting_request || (numbers_found >= request_count));
-                    if(numbers_found >= request_count)
+                    while(!generate_number); /* Waiting for next number request */
+
+                    if(prime_numbers_count == request) /* Program Finished */
                         break;
-                    generated_number = generated_number + 2;
-                    number_generated = 1;
-                    waiting_request = 1;
 
+                    generated_number += 2; /* Next Odd Number */
+                    generate_number = false; /* Lock next cycle */
                 }
             }
 
-            /* Verificador */
+            /* Verifier */
             #pragma omp section
             {
-                while(numbers_found < request_count){
-                    number_generated = 0;
-                    waiting_request = 0;
+                while(prime_numbers_count < request){ /* Program not finished */
 
-                    while(!number_generated|| (numbers_found >= request_count));
-                    if(numbers_found >= request_count)
+                    while(!verify_number); /* Waiting for next number request */
+                    verify_number = false; /* Lock next cycle */
+
+                    if(prime_numbers_count == request) /* Program Finished */
                         break;
 
-                    numbers_checked++;
-                    res = verifyNumber(generated_number);
+                    generate_number = true; /* Unlock Number Generator Thread */
 
-                    if(res != 0){
-                        #pragma omp critical
-                            collect_numbers = 1;
+                    while(generate_number); /* Wait until next number is generated */
 
-                        while (!number_collected);
+                    numbers_tested++;
 
-                        #pragma omp critical
-                        collect_numbers = 0;
-                        numbers_found++;
+                    if(verifyNumber(generated_number) != 0){ /* is a prime number */
+                        /* Collect Number */
+                        collect_number = true;
+                    }else{
+                        /* Ignore generated number */
+                        verify_number = true;
                     }
                 }
             }
 
-            /* Recolector */
+            /* Collector */
             #pragma omp section
             {
-                while(numbers_found < request_count){
-                    while(!collect_numbers);
-                    printf("Collected Numbmr: %d\n",generated_number);
-                    #pragma omp critical
-                    {
-                        number_collected = 1;
-                    }
+                while(prime_numbers_count < request){ /* Program not finished */
 
+                    while(!collect_number); /* Waiting for next number request */
+                    collect_number = false; /* Lock next cycle */
+
+                    prime_numbers[prime_numbers_count] = generated_number;  /* Store prime number */
+                    prime_numbers_count++;
+                    verify_number = true; /* Unlock Verifier Thread */
+
+                    if(prime_numbers_count == request){
+                        printPrimeNumbers(prime_numbers_count,prime_numbers,numbers_tested);
+                        generate_number = true;
+                        break;
+                    } /* Unlock all threads */
                 }
             }
-
         }
-
-
     }
+
+    stop = clock();
+
+    printf("Tiempo de ejecucion: %fs\n",(stop-start)/(double)CLOCKS_PER_SEC);
 
     return 0;
 }
 
 int verifyNumber(int number){
     int dividers = 0;
-    #pragma omp parallel
+    #pragma omp parallel default(shared)
     {
         #pragma omp for
             for(int i = 1; i <= number; i++){
@@ -104,9 +117,15 @@ int verifyNumber(int number){
     }
 
     if(dividers == 2){
-        printf("El numero %d es primo\n",number);
         return number;
     }
 
     return 0;
+}
+
+int printPrimeNumbers(int count, int* nubmers,int checked){
+    for(int i = 0; i < count; i++)
+        printf("El numero %d es primo\n",nubmers[i]);
+
+    printf("Numero Analizados %d\n",checked);
 }
