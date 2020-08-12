@@ -50,7 +50,9 @@ int main(int argc, char *argv[]) {
 
     if(rank == 0){
         end_time = MPI_Wtime();
-        printf("Se tardo %.2lf seconds\n",end_time-start_time);
+//        printf("Se tardo %.2lf seconds\n",end_time-start_time);
+        printf("Se tardo %f seconds\n",end_time-start_time);
+
     }
     MPI_Finalize();
     return 0;

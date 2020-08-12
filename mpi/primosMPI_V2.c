@@ -43,7 +43,6 @@ int main(int argc, char *argv[]){
         /*Verificar*/
         element = verificar(element);
         MPI_Gather(&element, 1, MPI_INT, generator_data, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
         /*Recoleccion*/
         if(rank == 0){
             for(int i = 0; i < size; i++){
@@ -60,13 +59,16 @@ int main(int argc, char *argv[]){
         }
         MPI_Bcast(&finish, 1, MPI_INT, 0,MPI_COMM_WORLD);
     }
+
     end_time=MPI_Wtime();
     if(rank == 0){
         for(int i = 0; i < request; i++){
             printf("Primo encontrado = %d\n", prime_numbers[i]);
         }
         printf("Se encontraron los %d primos en %d verificaciones\n", request, total);
-        printf("en %.2lf seconds\n",end_time-start_time);
+//        printf("en %.2lf seconds\n",end_time-start_time);
+        printf("Se tardo %f seconds\n",end_time-start_time);
+
         saveResult(prime_numbers, request);
     }
     MPI_Finalize();
