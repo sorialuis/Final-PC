@@ -31,6 +31,14 @@ int main(int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     MPI_Comm_size(MPI_COMM_WORLD,&size);
+
+    if(size < 3){
+        if(rank == 0){
+            printf("Se necesita al menos 3 procesos (Generador, Recolector y la menos 1 Verificador)\n");
+        }
+        return 0;
+    }
+
     if(rank == 0){
         //start
         generador();
@@ -71,6 +79,10 @@ void generador(){
         MPI_Recv(&finish, 1, MPI_INT, PROC_RECOLECTOR, 0, MPI_COMM_WORLD, &status);
         idVerificador = 0;
     }
+    element = 0;
+    for(int i = 2; i < cores; i++){
+        MPI_Isend(&element, 1, MPI_INT, i, 0, MPI_COMM_WORLD, &found_request);
+    }
     printf("Termino Generador\n");
 }
 void verificador(){
@@ -85,7 +97,11 @@ void verificador(){
         MPI_Isend(&myId,1,MPI_INT, PROC_GENERATE, 0, MPI_COMM_WORLD, &found_request);
         MPI_Wait(&found_request,&status);
         MPI_Recv(&element, 1, MPI_INT, PROC_GENERATE, 0, MPI_COMM_WORLD, &status);
-        printf("Verificando = %d\n",element);
+//        printf("Verificando = %d\n",element);
+        if(element == 0){
+            finish = 1;
+            break;
+        }
         for( int i = 1; i <= element; i++){
             if(element % i == 0){
                 dividers++;
@@ -93,15 +109,18 @@ void verificador(){
         }
         if(dividers == 2){
             MPI_Send(&element, 1, MPI_INT, PROC_RECOLECTOR, 0, MPI_COMM_WORLD);
+//            MPI_Isend(&element, 1, MPI_INT, PROC_RECOLECTOR, 0, MPI_COMM_WORLD, &found_request);
 //            printf("El numero %d es primo soy %d\n",element, myId);
         }else {
             element = 0;
             MPI_Send(&element, 1, MPI_INT, PROC_RECOLECTOR, 0, MPI_COMM_WORLD);
+//            MPI_Isend(&element, 1, MPI_INT, PROC_RECOLECTOR, 0, MPI_COMM_WORLD, &found_request);
         }
 
         dividers = 0;
 
-        MPI_Recv(&finish, 1, MPI_INT, PROC_RECOLECTOR, 0, MPI_COMM_WORLD, &status);
+//        MPI_Recv(&finish, 1, MPI_INT, PROC_RECOLECTOR, 0, MPI_COMM_WORLD, &status);
+
 //        MPI_Recv(&finish, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, &status);
 //        printf("finish %d - proc %d - elemento %d\n",finish, myId, element);
 
@@ -117,6 +136,7 @@ void recolector(int request){
     MPI_Comm_size(MPI_COMM_WORLD,&cores);
     int found = 0;
     int* prime_numbers = calloc(request,sizeof(int));
+    int count;
 
     while(found < request){
 
@@ -124,26 +144,28 @@ void recolector(int request){
             MPI_Irecv(&value, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &found_request);
             MPI_Wait(&found_request, &status);
         }while(value == -1);
+        count++;
         if(value != 0){
             prime_numbers[found] = value;
             printf("El numero %d es primo\n",prime_numbers[found]);
             found++;
         }
         MPI_Send(&finish, 1, MPI_INT, PROC_GENERATE, 0, MPI_COMM_WORLD);
-        for(int i = 2; i < cores; i++){
-            MPI_Send(&finish, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-        }
+//        for(int i = 2; i < cores; i++){
+//            MPI_Send(&finish, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+//        }
         value = -1;
     }
+    printf("Se encontro los %d primos en %d verificaciones\n",request, count);
 
     finish = 1;
     MPI_Send(&finish, 1, MPI_INT, PROC_GENERATE, 0, MPI_COMM_WORLD);
 
-    for(int i = 2; i < cores; i++){
-
-        MPI_Send(&finish, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-        printf("Cerrando %d proc = %d\n",finish,i);
-    }
+//    for(int i = 2; i < cores; i++){
+//
+//        MPI_Send(&finish, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+//        printf("Cerrando %d proc = %d\n",finish,i);
+//    }
     printf("Termino recolector\n");
     saveResult(prime_numbers,request);
 }

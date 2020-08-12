@@ -8,7 +8,6 @@ int verificar(int element);
 void saveResult(int* result, int count);
 
 int main(int argc, char *argv[]){
-    clock_t start, stop;
     int rank, size, error;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -21,6 +20,9 @@ int main(int argc, char *argv[]){
     int element = 0;
     int prime_number_count = 0;
     int total = 0;
+    double start_time,end_time;
+
+    start_time = MPI_Wtime();
 
     while(!finish){
         if(rank == 0){
@@ -47,7 +49,6 @@ int main(int argc, char *argv[]){
                 if(generator_data[i] != 0){
                     prime_numbers[prime_number_count] = generator_data[i];
                     prime_number_count++;
-                    printf("Primo encontrado = %d\n", generator_data[i]);
                 }
                 if(prime_number_count == request){
                     finish = 1;
@@ -58,8 +59,13 @@ int main(int argc, char *argv[]){
         }
         MPI_Bcast(&finish, 1, MPI_INT, 0,MPI_COMM_WORLD);
     }
+    end_time=MPI_Wtime();
     if(rank == 0){
+        for(int i = 0; i < request; i++){
+            printf("Primo encontrado = %d\n", prime_numbers[i]);
+        }
         printf("Se encontraron los %d primos en %d verificaciones\n", request, total);
+        printf("en %.2lf seconds\n",end_time-start_time);
         saveResult(prime_numbers, request);
     }
     MPI_Finalize();
@@ -72,6 +78,9 @@ int verificar(int element){
     for( int i = 1; i <= element; i++){
         if(element % i == 0){
             dividers++;
+        }
+        if(dividers > 2){
+            return 0;
         }
     }
     if(dividers == 2){
