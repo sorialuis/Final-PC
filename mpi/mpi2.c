@@ -22,9 +22,10 @@ int main(int argc, char *argv[]){
     int total = 0;
     double start_time,end_time;
 
-    start_time = MPI_Wtime();
+    start_time = MPI_Wtime();//    printf("Hello world! I am %d out of %d.\n",rank,size);
 
     while(!finish){
+        /*Generador*/
         if(rank == 0){
             for (int i = 0; i < size ;i++){
                 if(generados != 0){
@@ -38,11 +39,12 @@ int main(int argc, char *argv[]){
             }
         }
         MPI_Scatter(generator_data,1, MPI_INT,&element,1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        /*Verificar*/
         element = verificar(element);
-//        if(element != 0){
-//            printf("Primo = %d encontrado en proceso %d\n",element,rank);
-//        }
         MPI_Gather(&element, 1, MPI_INT, generator_data, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        /*Recoleccion*/
         if(rank == 0){
             for(int i = 0; i < size; i++){
                 total++;
@@ -54,7 +56,6 @@ int main(int argc, char *argv[]){
                     finish = 1;
                     i = size;
                 }
-
             }
         }
         MPI_Bcast(&finish, 1, MPI_INT, 0,MPI_COMM_WORLD);

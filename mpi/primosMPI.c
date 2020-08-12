@@ -18,20 +18,18 @@ void recolector(int request);
 void saveResult(int* result, int count);
 
 int main(int argc, char *argv[]) {
-//    printf("inicio\n");
-    clock_t start, stop;
+    printf("inicio\n");
+    double start_time,end_time;
     int request = atoi(argv[1]);
-//    printf("Ingrese la cantidad de numeros primos que quiere buscar: ");
-//    scanf("%d",&request);
 
 
 
-    int rank, size, error;
+    int rank, size;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     MPI_Comm_size(MPI_COMM_WORLD,&size);
     if(rank == 0){
-        //start
+        start_time = MPI_Wtime();
         generador();
     }
     if(rank == 1){
@@ -44,7 +42,8 @@ int main(int argc, char *argv[]) {
 //    printf("Hello world! I am %d out of %d.\n",rank,size);
 
     if(rank == 0){
-        //stop
+        end_time = MPI_Wtime();
+        printf("Se tardo %.2lf seconds\n",end_time-start_time);
     }
     MPI_Finalize();
     return 0;
