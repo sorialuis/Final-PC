@@ -82,7 +82,13 @@ int nextNumber(int* lastNumber){
     int aux;
     #pragma omp critical
     {
-        *lastNumber += 2;
+        if(*lastNumber == -1)
+            *lastNumber = 2;
+        else if (*lastNumber == 2){
+            *lastNumber = 3;
+        }else{
+            *lastNumber += 2;
+        }
         aux = *lastNumber;
     }
     return aux;
